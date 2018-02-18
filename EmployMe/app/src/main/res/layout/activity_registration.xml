@@ -6,6 +6,28 @@
     android:layout_height="match_parent"
     tools:context="com.jrocaberte.employme.RegistrationActivity"
     android:orientation="vertical">
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Name"
+        android:id="@+id/name"/>
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/radioGroup">
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Employer" />
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Applicant" />
+
+    </RadioGroup>
     
     <EditText
         android:layout_width="match_parent"
