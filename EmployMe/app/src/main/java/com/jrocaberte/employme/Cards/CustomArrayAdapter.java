@@ -37,7 +37,8 @@ public class CustomArrayAdapter extends android.widget.ArrayAdapter<Cards> {
         name.setText(card_item.getName());
         switch(card_item.getProfileImageUrl()){
             case "default":
-                Glide.with(convertView.getContext()).load(R.mipmap.ic_launcher).into(image);
+                Glide.clear(image);
+                Glide.with(convertView.getContext()).load(R.mipmap.ic_launcher_round).into(image);
                 break;
             default:
                 Glide.clear(image);

@@ -120,7 +120,7 @@ public class SettingsActivity extends Activity {
                         profileImageUrl = map.get("profileImageUrl").toString();
                         switch (profileImageUrl) {
                             case "default":
-                                Glide.with(getApplication()).load(R.mipmap.ic_launcher).into(mProfileImage);
+                                Glide.with(getApplication()).load(R.mipmap.ic_launcher_round).into(mProfileImage);
                                 break;
                             default:
                                 Glide.with(getApplication()).load(profileImageUrl).into(mProfileImage);
