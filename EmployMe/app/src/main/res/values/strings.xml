@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">EmployMe</string>
+    <string name="title_activity_matches">Matches</string>
 </resources>

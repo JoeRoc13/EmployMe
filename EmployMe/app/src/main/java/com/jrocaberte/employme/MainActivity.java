@@ -15,6 +15,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.jrocaberte.employme.Cards.Cards;
+import com.jrocaberte.employme.Cards.CustomArrayAdapter;
+import com.jrocaberte.employme.Matches.MatchesActivity;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.util.ArrayList;
@@ -67,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
             public void onLeftCardExit(Object dataObject) {
                 Cards obj = (Cards) dataObject;
                 String userId = obj.getUserId();
-                usersDb.child(oppositeUserType).child(userId).child("connections").child("swiped_left").child(currentUid).setValue(true);
+                usersDb.child(userId).child("connections").child("swiped_left").child(currentUid).setValue(true);
                 Toast.makeText(MainActivity.this, "Left!", Toast.LENGTH_SHORT).show();
             }
 
@@ -75,7 +79,8 @@ public class MainActivity extends AppCompatActivity {
             public void onRightCardExit(Object dataObject) {
                 Cards obj = (Cards) dataObject;
                 String userId = obj.getUserId();
-                usersDb.child(oppositeUserType).child(userId).child("connections").child("swiped_right").child(currentUid).setValue(true);
+                usersDb.child(userId).child("connections").child("swiped_right").child(currentUid).setValue(true);
+                isConnectionMatch(userId);
                 Toast.makeText(MainActivity.this, "Right!", Toast.LENGTH_SHORT).show();
             }
 
@@ -98,7 +103,26 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Click!", Toast.LENGTH_SHORT).show();
             }
         });
+    }
 
+    private void isConnectionMatch(String userId) {
+        DatabaseReference currentUserConnectionsDb = usersDb.child(currentUid).child("connections").child("swiped_right").child(userId);
+        currentUserConnectionsDb.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    Toast.makeText(MainActivity.this, "New Connection!", Toast.LENGTH_LONG).show();
+                    String key = FirebaseDatabase.getInstance().getReference().child("Chat").push().getKey();
+                    usersDb.child(dataSnapshot.getKey()).child("connections").child("matches").child(currentUid).child("ChatId").setValue(key);
+                    usersDb.child(currentUid).child("connections").child("matches").child(dataSnapshot.getKey()).child("ChatId").setValue(key);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private String userType;
@@ -107,58 +131,46 @@ public class MainActivity extends AppCompatActivity {
     public void checkUserType() {
         final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        DatabaseReference employerDb = FirebaseDatabase.getInstance().getReference().child("Users").child("Employer");
-        employerDb.addChildEventListener(new ChildEventListener() {
+        DatabaseReference userDb = usersDb.child(user.getUid());
+        userDb.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if(dataSnapshot.getKey().equals(user.getUid())) {
-                    userType = "Employer";
-                    oppositeUserType = "Applicant";
-                    getOppositeTypeUsers();
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    if (dataSnapshot.child("type").getValue() != null) {
+                        userType = dataSnapshot.child("type").getValue().toString();
+                        switch (userType){
+                            case "Applicant":
+                                oppositeUserType = "Employer";
+                                break;
+                            case "Employer":
+                                oppositeUserType = "Applicant";
+                                break;
+                        }
+                        getOppositeTypeUsers();
+                    }
                 }
             }
 
             @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-            @Override
             public void onCancelled(DatabaseError databaseError) {}
         });
 
-        DatabaseReference applicantDb = FirebaseDatabase.getInstance().getReference().child("Users").child("Applicant");
-        applicantDb.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if (dataSnapshot.getKey().equals(user.getUid())) {
-                    userType = "Applicant";
-                    oppositeUserType = "Employer";
-                    getOppositeTypeUsers();
-                }
-            }
-
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
     }
 
     public void getOppositeTypeUsers() {
-        DatabaseReference oppositeTypeDb = FirebaseDatabase.getInstance().getReference().child("Users").child(oppositeUserType);
-        oppositeTypeDb.addChildEventListener(new ChildEventListener() {
+        usersDb.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if (dataSnapshot.exists() && !dataSnapshot.child("connections").child("swiped_left").hasChild(currentUid) && !dataSnapshot.child("connections").child("swiped_right").hasChild(currentUid)) {
-                    Cards item = new Cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString());
-                    rowItems.add(item);
-                    arrayAdapter.notifyDataSetChanged();
+                if (dataSnapshot.child("type").getValue() != null) {
+                    if (dataSnapshot.exists() && !dataSnapshot.child("connections").child("swiped_left").hasChild(currentUid) && !dataSnapshot.child("connections").child("swiped_right").hasChild(currentUid) && dataSnapshot.child("type").getValue().toString().equals(oppositeUserType)) {
+                        String profileImageUrl = "default";
+                        if (!dataSnapshot.child("profileImageUrl").getValue().equals("default")) {
+                            profileImageUrl = dataSnapshot.child("profileImageUrl").getValue().toString();
+                        }
+                        Cards item = new Cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString(), profileImageUrl);
+                        rowItems.add(item);
+                        arrayAdapter.notifyDataSetChanged();
+                    }
                 }
             }
 
@@ -178,6 +190,18 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, ChooseLoginRegistrationActivity.class);
         startActivity(intent);
         finish();
+        return;
+    }
+
+    public void goToSettings(View view) {
+        Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+        startActivity(intent);
+        return;
+    }
+
+    public void goToMatches(View view) {
+        Intent intent = new Intent(MainActivity.this, MatchesActivity.class);
+        startActivity(intent);
         return;
     }
 }
