@@ -71,22 +71,26 @@ public class MainActivity extends AppCompatActivity {
             public void onLeftCardExit(Object dataObject) {
                 Cards obj = (Cards) dataObject;
                 String userId = obj.getUserId();
-                usersDb.child(userId).child("connections").child("swiped_left").child(currentUid).setValue(true);
-                Toast.makeText(MainActivity.this, "Left!", Toast.LENGTH_SHORT).show();
+                if(!userId.equals("")) {
+                    usersDb.child(userId).child("connections").child("swiped_left").child(currentUid).setValue(true);
+                    Toast.makeText(MainActivity.this, "Left!", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onRightCardExit(Object dataObject) {
                 Cards obj = (Cards) dataObject;
                 String userId = obj.getUserId();
-                usersDb.child(userId).child("connections").child("swiped_right").child(currentUid).setValue(true);
-                isConnectionMatch(userId);
-                Toast.makeText(MainActivity.this, "Right!", Toast.LENGTH_SHORT).show();
+                if(!userId.equals("")) {
+                    usersDb.child(userId).child("connections").child("swiped_right").child(currentUid).setValue(true);
+                    isConnectionMatch(userId);
+                    Toast.makeText(MainActivity.this, "Right!", Toast.LENGTH_SHORT).show();
+                }
             }
 
             @Override
             public void onAdapterAboutToEmpty(int itemsInAdapter) {
-
+                rowItems.add(new Cards("", "No available users", "default"));
             }
 
             @Override
@@ -169,6 +173,8 @@ public class MainActivity extends AppCompatActivity {
                         }
                         Cards item = new Cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString(), profileImageUrl);
                         rowItems.add(item);
+                        arrayAdapter.notifyDataSetChanged();
+                    } else {
                         arrayAdapter.notifyDataSetChanged();
                     }
                 }

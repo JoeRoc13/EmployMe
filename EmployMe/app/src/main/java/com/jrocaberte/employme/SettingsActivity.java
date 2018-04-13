@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -30,11 +31,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by Joey on 3/20/18.
- */
-
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends AppCompatActivity {
 
     private EditText mNameField, mPhoneField;
 
@@ -77,14 +74,12 @@ public class SettingsActivity extends Activity {
                 startActivityForResult(intent, 1);
             }
         });
-
         mConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 saveUserInformation();
             }
         });
-
         mBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -92,8 +87,8 @@ public class SettingsActivity extends Activity {
                 return;
             }
         });
-
     }
+
 
     private void getUserInfo() {
         mUserDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -101,12 +96,10 @@ public class SettingsActivity extends Activity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0){
                     Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-
                     if(map.get("name") != null) {
                         name = map.get("name").toString();
                         mNameField.setText(name);
                     }
-
                     if(map.get("phone") != null) {
                         phone = map.get("phone").toString();
                         mPhoneField.setText(phone);
@@ -114,13 +107,12 @@ public class SettingsActivity extends Activity {
                     if(map.get("type") != null) {
                         userType = map.get("type").toString();
                     }
-
                     Glide.clear(mProfileImage);
                     if(map.get("profileImageUrl") != null) {
                         profileImageUrl = map.get("profileImageUrl").toString();
                         switch (profileImageUrl) {
                             case "default":
-                                Glide.with(getApplication()).load(R.mipmap.ic_launcher_round).into(mProfileImage);
+                                mProfileImage.setImageResource(R.drawable.default_profile);
                                 break;
                             default:
                                 Glide.with(getApplication()).load(profileImageUrl).into(mProfileImage);
