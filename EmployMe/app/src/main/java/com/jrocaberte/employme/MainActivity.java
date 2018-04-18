@@ -1,13 +1,16 @@
 package com.jrocaberte.employme;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.github.barteksc.pdfviewer.PDFView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -21,13 +24,21 @@ import com.jrocaberte.employme.Cards.CustomArrayAdapter;
 import com.jrocaberte.employme.Matches.MatchesActivity;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private Cards cards_data[];
     private CustomArrayAdapter arrayAdapter;
-    private int i;
+    private SwipeFlingAdapterView flingContainer;
+    private PDFView pdfView;
+    private Button mCloseResume, mCloseJobDescription;
 
     private FirebaseAuth mAuth;
 
@@ -54,9 +65,12 @@ public class MainActivity extends AppCompatActivity {
 
         arrayAdapter = new CustomArrayAdapter(this, R.layout.item, rowItems);
 
-        SwipeFlingAdapterView flingContainer = (SwipeFlingAdapterView) findViewById(R.id.frame);
+        pdfView = (PDFView) findViewById(R.id.pdfView);
 
+        mCloseResume = (Button) findViewById(R.id.closeResume);
+        mCloseJobDescription = (Button) findViewById(R.id.closeJobDescription);
 
+        flingContainer = (SwipeFlingAdapterView) findViewById(R.id.frame);
         flingContainer.setAdapter(arrayAdapter);
         flingContainer.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
             @Override
@@ -73,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
                 String userId = obj.getUserId();
                 if(!userId.equals("")) {
                     usersDb.child(userId).child("connections").child("swiped_left").child(currentUid).setValue(true);
-                    Toast.makeText(MainActivity.this, "Left!", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -84,18 +97,19 @@ public class MainActivity extends AppCompatActivity {
                 if(!userId.equals("")) {
                     usersDb.child(userId).child("connections").child("swiped_right").child(currentUid).setValue(true);
                     isConnectionMatch(userId);
-                    Toast.makeText(MainActivity.this, "Right!", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onAdapterAboutToEmpty(int itemsInAdapter) {
-                rowItems.add(new Cards("", "No available users", "default"));
+
             }
 
             @Override
             public void onScroll(float scrollProgressPercent) {
-
+                View view = flingContainer.getSelectedView();
+                view.findViewById(R.id.item_swipe_left_indicator).setAlpha(scrollProgressPercent < 0 ? -scrollProgressPercent : 0);
+                view.findViewById(R.id.item_swipe_right_indicator).setAlpha(scrollProgressPercent > 0 ? scrollProgressPercent : 0);
             }
         });
 
@@ -103,8 +117,59 @@ public class MainActivity extends AppCompatActivity {
         // Optionally add an OnItemClickListener
         flingContainer.setOnItemClickListener(new SwipeFlingAdapterView.OnItemClickListener() {
             @Override
-            public void onItemClicked(int itemPosition, Object dataObject) {
-                Toast.makeText(MainActivity.this, "Click!", Toast.LENGTH_SHORT).show();
+            public void onItemClicked(int itemPosition, final Object dataObject) {
+                Cards obj = (Cards) dataObject;
+                String userId = obj.getUserId();
+                if(oppositeUserType.equals("Applicant")) {
+                    usersDb.child(userId).child("profileResumeUrl").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if(dataSnapshot.exists()) {
+                                String profileResumeUrl = dataSnapshot.getValue().toString();
+                                new RetrievePDFStream().execute(profileResumeUrl);
+                                pdfView.setVisibility(View.VISIBLE);
+                                mCloseResume.setVisibility(View.VISIBLE);
+
+                                mCloseResume.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        pdfView.setVisibility(View.GONE);
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
+                } else {
+                    usersDb.child(userId).child("jobDescriptionUrl").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if(dataSnapshot.exists()) {
+                                String jobDescriptionUrl = dataSnapshot.getValue().toString();
+                                new RetrievePDFStream().execute(jobDescriptionUrl);
+                                pdfView.setVisibility(View.VISIBLE);
+                                mCloseJobDescription.setVisibility(View.VISIBLE);
+
+                                mCloseJobDescription.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        pdfView.setVisibility(View.GONE);
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+                }
             }
         });
     }
@@ -174,8 +239,6 @@ public class MainActivity extends AppCompatActivity {
                         Cards item = new Cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString(), profileImageUrl);
                         rowItems.add(item);
                         arrayAdapter.notifyDataSetChanged();
-                    } else {
-                        arrayAdapter.notifyDataSetChanged();
                     }
                 }
             }
@@ -189,7 +252,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCancelled(DatabaseError databaseError) {}
         });
+
     }
+
 
     public void logoutUser(View view) {
         mAuth.signOut();
@@ -209,5 +274,30 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, MatchesActivity.class);
         startActivity(intent);
         return;
+    }
+
+    class RetrievePDFStream extends AsyncTask<String, Void, InputStream> {
+
+        @Override
+        protected InputStream doInBackground(String... strings) {
+            InputStream inputStream = null;
+            try {
+                URL url = new URL(strings[0]);
+                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                if(urlConnection.getResponseCode() == 200) {
+                    inputStream = new BufferedInputStream(urlConnection.getInputStream());
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return inputStream;
+        }
+
+        @Override
+        protected void onPostExecute(InputStream inputStream) {
+            pdfView.fromStream(inputStream).load();
+        }
     }
 }

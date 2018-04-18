@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -12,8 +13,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.bumptech.glide.Glide;
+import com.github.barteksc.pdfviewer.PDFView;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,8 +29,13 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,16 +43,22 @@ public class SettingsActivity extends AppCompatActivity {
 
     private EditText mNameField, mPhoneField;
 
-    private Button mBack, mConfirm;
+    private Button mViewResume, mCloseResume, mUploadResume, mViewJobDescription, mCloseJobDescription, mUploadJobDescription, mConfirm;
 
     private ImageView mProfileImage;
+
+    private LinearLayout mApplicantLayout, mEmployerLayout;
+
+    private PDFView pdfView;
 
     private FirebaseAuth mAuth;
     private DatabaseReference mUserDatabase;
 
-    private String userId, name, phone, profileImageUrl, userType;
+    private String userId, name, phone, profileImageUrl, profileResumeUrl, userType;
 
-    private Uri resultUri;
+    private Uri resultUri, resultUriResume;
+
+    private static final int READ_REQUEST_CODE = 42;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,8 +70,20 @@ public class SettingsActivity extends AppCompatActivity {
 
         mProfileImage = (ImageView) findViewById(R.id.profileImage);
 
-        mBack = (Button) findViewById(R.id.back);
+        mViewResume = (Button) findViewById(R.id.viewResume);
+        mCloseResume = (Button) findViewById(R.id.closeResume);
+        mUploadResume = (Button) findViewById(R.id.uploadResume);
+
+        mViewJobDescription = (Button) findViewById(R.id.viewJobDescription);
+        mCloseJobDescription = (Button) findViewById(R.id.closeJobDescription);
+        mUploadJobDescription = (Button) findViewById(R.id.uploadJobDescription);
+
         mConfirm = (Button) findViewById(R.id.confirm);
+
+        mApplicantLayout = (LinearLayout) findViewById(R.id.applicantLayout);
+        mEmployerLayout = (LinearLayout) findViewById(R.id.employerLayout);
+
+        pdfView = (PDFView) findViewById(R.id.pdfView);
 
         mAuth = FirebaseAuth.getInstance();
         userId = mAuth.getCurrentUser().getUid();
@@ -74,17 +100,85 @@ public class SettingsActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
             }
         });
+
+        mViewResume.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mUserDatabase.child("profileResumeUrl").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        String profileResumeUrl = dataSnapshot.getValue().toString();
+                        new RetrievePDFStream().execute(profileResumeUrl);
+                        pdfView.setVisibility(View.VISIBLE);
+                        mCloseResume.setVisibility(View.VISIBLE);
+
+                        mCloseResume.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                pdfView.setVisibility(View.GONE);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
+
+        mUploadResume.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(SettingsActivity.this, UploadResumeActivity.class);
+                startActivity(intent);
+                finish();
+                return;
+            }
+        });
+
+        mViewJobDescription.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mUserDatabase.child("jobDescriptionUrl").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        String jobDescriptionUrl = dataSnapshot.getValue().toString();
+                        new RetrievePDFStream().execute(jobDescriptionUrl);
+                        pdfView.setVisibility(View.VISIBLE);
+                        mCloseJobDescription.setVisibility(View.VISIBLE);
+
+                        mCloseJobDescription.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                pdfView.setVisibility(View.GONE);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
+
+        mUploadJobDescription.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(SettingsActivity.this, UploadJobDescriptionActivity.class);
+                startActivity(intent);
+                finish();
+                return;
+            }
+        });
+
         mConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 saveUserInformation();
-            }
-        });
-        mBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-                return;
             }
         });
     }
@@ -106,6 +200,11 @@ public class SettingsActivity extends AppCompatActivity {
                     }
                     if(map.get("type") != null) {
                         userType = map.get("type").toString();
+                        if(userType.equals("Applicant")) {
+                            mApplicantLayout.setVisibility(View.VISIBLE);
+                        } else if(userType.equals("Employer")) {
+                            mEmployerLayout.setVisibility(View.VISIBLE);
+                        }
                     }
                     Glide.clear(mProfileImage);
                     if(map.get("profileImageUrl") != null) {
@@ -115,7 +214,7 @@ public class SettingsActivity extends AppCompatActivity {
                                 mProfileImage.setImageResource(R.drawable.default_profile);
                                 break;
                             default:
-                                Glide.with(getApplication()).load(profileImageUrl).into(mProfileImage);
+                                Glide.with(getApplication()).load(profileImageUrl).centerCrop().into(mProfileImage);
                                 break;
                         }
                     }
@@ -138,6 +237,7 @@ public class SettingsActivity extends AppCompatActivity {
         userInfo.put("name", name);
         userInfo.put("phone", phone);
         mUserDatabase.updateChildren(userInfo);
+
         if(resultUri != null) {
             StorageReference filepath = FirebaseStorage.getInstance().getReference().child("profileImages").child(userId);
             Bitmap bitmap = null;
@@ -183,6 +283,31 @@ public class SettingsActivity extends AppCompatActivity {
             final Uri imageUri = data.getData();
             resultUri = imageUri;
             mProfileImage.setImageURI(resultUri);
+        }
+    }
+
+    class RetrievePDFStream extends AsyncTask<String, Void, InputStream> {
+
+        @Override
+        protected InputStream doInBackground(String... strings) {
+            InputStream inputStream = null;
+            try {
+                URL url = new URL(strings[0]);
+                HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
+                if(urlConnection.getResponseCode() == 200) {
+                    inputStream = new BufferedInputStream(urlConnection.getInputStream());
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return inputStream;
+        }
+
+        @Override
+        protected void onPostExecute(InputStream inputStream) {
+            pdfView.fromStream(inputStream).load();
         }
     }
 }

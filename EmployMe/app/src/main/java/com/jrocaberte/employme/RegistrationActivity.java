@@ -28,6 +28,7 @@ public class RegistrationActivity extends AppCompatActivity {
     private EditText mEmail, mPassword, mName;
 
     private RadioGroup mRadioGroup;
+    private RadioButton radioButton;
 
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener firebaseAuthStateListener;
@@ -42,8 +43,13 @@ public class RegistrationActivity extends AppCompatActivity {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                Intent intent = null;
                 if(user != null) {
-                    Intent intent = new Intent(RegistrationActivity.this, MainActivity.class);
+                    if(radioButton.getText().toString().equals("Applicant")) {
+                        intent = new Intent(RegistrationActivity.this, UploadResumeActivity.class);
+                    } else if (radioButton.getText().toString().equals("Employer")) {
+                        intent = new Intent(RegistrationActivity.this, UploadJobDescriptionActivity.class);
+                    }
                     startActivity(intent);
                     finish();
                     return;
@@ -64,7 +70,7 @@ public class RegistrationActivity extends AppCompatActivity {
             public void onClick(View view) {
                 int selectId = mRadioGroup.getCheckedRadioButtonId();
 
-                final RadioButton radioButton = (RadioButton)findViewById(selectId);
+                radioButton = (RadioButton)findViewById(selectId);
 
                 if(radioButton.getText() == null) {
                     return;
@@ -104,4 +110,5 @@ public class RegistrationActivity extends AppCompatActivity {
         super.onStop();
         mAuth.removeAuthStateListener(firebaseAuthStateListener);
     }
+
 }
