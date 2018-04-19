@@ -5,12 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.jrocaberte.employme.UploadResumeActivity">
+    tools:context="com.jrocaberte.employme.UploadProfileImageActivity">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Upload your resume"
+        android:text="Choose a profile picture"
         android:textSize="25sp"
         android:gravity="center"
         android:paddingTop="20dp"
@@ -22,24 +22,19 @@
         android:layout_height="wrap_content">
 
         <Button
-            android:id="@+id/uploadResume"
+            android:id="@+id/uploadProfileImage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Upload" />
 
         <Button
-            android:id="@+id/submitResume"
+            android:id="@+id/submitProfileImage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Submit" />
 
     </LinearLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=" * Must be in PDF format"/>
 
 </LinearLayout>

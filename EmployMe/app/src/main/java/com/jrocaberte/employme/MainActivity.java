@@ -40,11 +40,16 @@ public class MainActivity extends AppCompatActivity {
     private PDFView pdfView;
     private Button mCloseResume, mCloseJobDescription;
 
+    private String userType;
+    private String oppositeUserType;
+
     private FirebaseAuth mAuth;
 
     private String currentUid;
 
     private DatabaseReference usersDb;
+
+    private FirebaseAuth.AuthStateListener firebaseAuthStateListener;
 
     ListView listView;
     List<Cards> rowItems;
@@ -174,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
     private void isConnectionMatch(String userId) {
         DatabaseReference currentUserConnectionsDb = usersDb.child(currentUid).child("connections").child("swiped_right").child(userId);
         currentUserConnectionsDb.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -194,9 +200,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private String userType;
-    private String oppositeUserType;
-
     public void checkUserType() {
         final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -216,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
                                 break;
                         }
                         getOppositeTypeUsers();
+                        checkFilesUploaded();
                     }
                 }
             }
@@ -224,6 +228,66 @@ public class MainActivity extends AppCompatActivity {
             public void onCancelled(DatabaseError databaseError) {}
         });
 
+    }
+
+    private void checkFilesUploaded() {
+        usersDb.child(currentUid).child("profileImageUrl").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    if(dataSnapshot.getValue().equals("default")) {
+                        Intent intent = new Intent(MainActivity.this, UploadProfileImageActivity.class);
+                        intent.putExtra("SignedUp", true);
+                        startActivity(intent);
+                        finish();
+                        return;
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        if(userType.equals("Applicant")) {
+            usersDb.child(currentUid).child("profileResumeUrl").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(!dataSnapshot.exists()) {
+                        Intent intent = new Intent(MainActivity.this, UploadResumeActivity.class);
+                        intent.putExtra("SignedUp", true);
+                        startActivity(intent);
+                        finish();
+                        return;
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        } else {
+            usersDb.child(currentUid).child("jobDescriptionUrl").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(!dataSnapshot.exists()) {
+                        Intent intent = new Intent(MainActivity.this, UploadJobDescriptionActivity.class);
+                        intent.putExtra("SignedUp", true);
+                        startActivity(intent);
+                        finish();
+                        return;
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        }
     }
 
     public void getOppositeTypeUsers() {

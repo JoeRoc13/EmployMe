@@ -43,13 +43,8 @@ public class RegistrationActivity extends AppCompatActivity {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                Intent intent = null;
                 if(user != null) {
-                    if(radioButton.getText().toString().equals("Applicant")) {
-                        intent = new Intent(RegistrationActivity.this, UploadResumeActivity.class);
-                    } else if (radioButton.getText().toString().equals("Employer")) {
-                        intent = new Intent(RegistrationActivity.this, UploadJobDescriptionActivity.class);
-                    }
+                    Intent intent = new Intent(RegistrationActivity.this, UploadProfileImageActivity.class);
                     startActivity(intent);
                     finish();
                     return;
