@@ -27,7 +27,8 @@
         <activity android:name=".SettingsActivity" />
         <activity android:name=".Matches.MatchesActivity" />
         <activity android:name=".Chat.ChatActivity" />
-        <activity android:name=".UploadJobDescriptionActivity"></activity>
+        <activity android:name=".UploadJobDescriptionActivity" />
+        <activity android:name=".UploadProfileImageActivity"></activity>
     </application>
 
 </manifest>
