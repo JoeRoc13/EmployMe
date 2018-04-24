@@ -29,6 +29,8 @@ public class MatchesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_matches);
 
+        setupActionBar();
+
         currentUserID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
@@ -43,6 +45,10 @@ public class MatchesActivity extends AppCompatActivity {
 
         getUserMatchId();
 
+    }
+
+    private void setupActionBar() {
+        getSupportActionBar().setTitle("Matches");
     }
 
     private void getUserMatchId() {

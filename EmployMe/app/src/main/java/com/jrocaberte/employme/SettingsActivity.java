@@ -66,6 +66,8 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        setupActionBar();
+
         mNameField = (EditText) findViewById(R.id.name);
         mPhoneField = (EditText) findViewById(R.id.phone);
 
@@ -192,6 +194,10 @@ public class SettingsActivity extends AppCompatActivity {
                 saveUserInformation();
             }
         });
+    }
+
+    private void setupActionBar() {
+        getSupportActionBar().setTitle("Settings");
     }
 
 
