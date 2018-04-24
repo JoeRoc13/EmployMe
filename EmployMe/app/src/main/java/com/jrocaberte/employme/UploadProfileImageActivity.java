@@ -135,7 +135,7 @@ public class UploadProfileImageActivity extends AppCompatActivity {
 
                     Intent oldIntent = getIntent();
                     Intent intent = null;
-                    if(oldIntent != null) {
+                    if(oldIntent.getExtras() != null) {
                         Bundle b = oldIntent.getExtras();
                         if(b.get("SignedUp").equals(true)) {
                             intent = new Intent(UploadProfileImageActivity.this, MainActivity.class);
