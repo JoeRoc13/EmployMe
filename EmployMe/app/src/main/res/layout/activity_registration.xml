@@ -6,13 +6,33 @@
     android:layout_height="match_parent"
     tools:context="com.jrocaberte.employme.RegistrationActivity"
     android:orientation="vertical">
+    
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Email"
+        android:id="@+id/email"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Password"
+        android:id="@+id/password"
+        android:inputType="textPassword"/>
 
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Name"
         android:id="@+id/name"
-        android:inputType="textPersonName"/>
+        android:inputType="textCapWords"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Phone Number"
+        android:id="@+id/phone"
+        android:inputType="phone"/>
 
     <RadioGroup
         android:layout_width="match_parent"
@@ -29,19 +49,6 @@
             android:text="Applicant" />
 
     </RadioGroup>
-    
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Email"
-        android:id="@+id/email"/>
-
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Password"
-        android:id="@+id/password"
-        android:inputType="textPassword"/>
 
     <Button
         android:layout_width="match_parent"

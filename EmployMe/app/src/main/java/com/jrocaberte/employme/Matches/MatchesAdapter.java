@@ -39,7 +39,7 @@ class MatchesAdapter extends RecyclerView.Adapter<MatchesViewHolders> {
         holder.mMatchId.setText(matchesList.get(position).getUserId());
         holder.mMatchName.setText(matchesList.get(position).getName());
         if(!matchesList.get(position).getProfileImageUrl().equals("default")){
-            Glide.with(context).load(matchesList.get(position).getProfileImageUrl()).into(holder.mMatchImage);
+            Glide.with(context).load(matchesList.get(position).getProfileImageUrl()).centerCrop().into(holder.mMatchImage);
         }
     }
 

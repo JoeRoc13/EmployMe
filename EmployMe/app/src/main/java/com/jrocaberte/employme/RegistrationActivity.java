@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.PhoneNumberUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,7 +26,7 @@ import java.util.Map;
 public class RegistrationActivity extends AppCompatActivity {
 
     private Button mRegister;
-    private EditText mEmail, mPassword, mName;
+    private EditText mEmail, mPassword, mName, mPhone;
 
     private RadioGroup mRadioGroup;
     private RadioButton radioButton;
@@ -57,6 +58,7 @@ public class RegistrationActivity extends AppCompatActivity {
         mEmail = (EditText)findViewById(R.id.email);
         mPassword = (EditText)findViewById(R.id.password);
         mName = (EditText)findViewById(R.id.name);
+        mPhone = (EditText)findViewById(R.id.phone);
 
         mRadioGroup = (RadioGroup)findViewById(R.id.radioGroup);
 
@@ -74,6 +76,7 @@ public class RegistrationActivity extends AppCompatActivity {
                 final String email = mEmail.getText().toString();
                 final String password = mPassword.getText().toString();
                 final String name = mName.getText().toString();
+                final String phone = PhoneNumberUtils.formatNumber(mPhone.getText().toString());
                 mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(RegistrationActivity.this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
@@ -84,6 +87,7 @@ public class RegistrationActivity extends AppCompatActivity {
                             DatabaseReference currentUserDb = FirebaseDatabase.getInstance().getReference().child("Users").child(userId);
                             Map userInfo = new HashMap<>();
                             userInfo.put("name", name);
+                            userInfo.put("phone", phone);
                             userInfo.put("profileImageUrl", "default");
                             userInfo.put("type", radioButton.getText().toString());
                             currentUserDb.updateChildren(userInfo);

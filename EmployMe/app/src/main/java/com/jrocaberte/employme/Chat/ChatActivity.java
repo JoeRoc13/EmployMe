@@ -1,12 +1,16 @@
 package com.jrocaberte.employme.Chat;
 
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
@@ -29,7 +33,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private EditText mSendEditText;
     private Button mSendButton;
-    private String currentUserID, matchId, chatId;
+    private String currentUserID, matchId, matchName, chatId;
 
     DatabaseReference mDatabaseUser, mDatabaseChat;
 
@@ -39,6 +43,9 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         matchId = getIntent().getExtras().getString("matchId");
+        matchName = getIntent().getExtras().getString("matchName");
+
+        setupActionBar();
 
         currentUserID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
@@ -66,10 +73,27 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    private void setupActionBar() {
+        ActionBar mActionBar = getSupportActionBar();
+        mActionBar.setDisplayShowTitleEnabled(false);
+        LayoutInflater mInflater = LayoutInflater.from(this);
+
+        ActionBar.LayoutParams params = new ActionBar.LayoutParams(
+                ActionBar.LayoutParams.WRAP_CONTENT,
+                ActionBar.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER_HORIZONTAL);
+
+        View mCustomView = mInflater.inflate(R.layout.chat_action_bar, null);
+        TextView mTitleTextView = (TextView) mCustomView.findViewById(R.id.receiverName);
+        mTitleTextView.setText(matchName);
+        mActionBar.setCustomView(mCustomView, params);
+        mActionBar.setDisplayShowCustomEnabled(true);
+    }
+
     private void sendMessage() {
         String sendMessageText = mSendEditText.getText().toString();
 
-        if(!sendMessageText.isEmpty()){
+        if(!sendMessageText.trim().isEmpty()){
             DatabaseReference newMessageDb = mDatabaseChat.push();
             Map newMessage = new HashMap();
             newMessage.put("createdByUser", currentUserID);

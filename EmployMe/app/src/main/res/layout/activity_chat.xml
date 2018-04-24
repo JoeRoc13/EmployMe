@@ -6,14 +6,15 @@
     tools:context="com.jrocaberte.employme.Chat.ChatActivity">
 
     <android.support.v4.widget.NestedScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/sendLayout">
 
         <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/recyclerView"
             android:scrollbars="vertical">
 
         </android.support.v7.widget.RecyclerView>
@@ -25,14 +26,16 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
-        android:id="@+id/sendLayout">
+        android:id="@+id/sendLayout"
+        android:layout_marginTop="10dp">
 
         <EditText
             android:layout_weight="0.8"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="Type a message"
-            android:id="@+id/message"/>
+            android:id="@+id/message"
+            android:inputType="textCapSentences"/>
 
         <Button
             android:layout_weight="0.2"
