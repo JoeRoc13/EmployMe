@@ -64,4 +64,15 @@
         app:rotation_degrees="15.5"
         tools:context=".MyActivity" />
 
+    <TextView
+        android:id="@+id/noUsers"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:paddingBottom="20dp"
+        android:text="No users available!"
+        android:textSize="24sp"
+        android:visibility="gone" />
+
 </LinearLayout>

@@ -41,7 +41,7 @@ public class CustomArrayAdapter extends android.widget.ArrayAdapter<Cards> {
                 break;
             default:
                 Glide.clear(image);
-                Glide.with(convertView.getContext()).load(card_item.getProfileImageUrl()).into(image);
+                Glide.with(convertView.getContext()).load(card_item.getProfileImageUrl()).centerCrop().into(image);
                 break;
         }
 

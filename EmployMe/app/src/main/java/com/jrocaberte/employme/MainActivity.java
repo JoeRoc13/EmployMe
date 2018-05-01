@@ -9,7 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.barteksc.pdfviewer.PDFView;
@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private Cards cards_data[];
     private CustomArrayAdapter arrayAdapter;
     private SwipeFlingAdapterView flingContainer;
     private PDFView pdfView;
@@ -51,10 +50,9 @@ public class MainActivity extends AppCompatActivity {
 
     private DatabaseReference usersDb;
 
-    private FirebaseAuth.AuthStateListener firebaseAuthStateListener;
-
-    ListView listView;
     List<Cards> rowItems;
+
+    private TextView mNoUsers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +75,10 @@ public class MainActivity extends AppCompatActivity {
         mCloseResume = (Button) findViewById(R.id.closeResume);
         mCloseJobDescription = (Button) findViewById(R.id.closeJobDescription);
 
+        mNoUsers = (TextView)findViewById(R.id.noUsers);
+
         flingContainer = (SwipeFlingAdapterView) findViewById(R.id.frame);
+        flingContainer.setVisibility(View.VISIBLE);
         flingContainer.setAdapter(arrayAdapter);
         flingContainer.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
             @Override
@@ -95,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 if(!userId.equals("")) {
                     usersDb.child(userId).child("connections").child("swiped_left").child(currentUid).setValue(true);
                 }
+                checkIfNoUsersLeft();
             }
 
             @Override
@@ -105,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
                     usersDb.child(userId).child("connections").child("swiped_right").child(currentUid).setValue(true);
                     isConnectionMatch(userId);
                 }
+                checkIfNoUsersLeft();
             }
 
             @Override
@@ -179,6 +182,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+    }
+
+    private void checkIfNoUsersLeft() {
+        if(rowItems.size() == 0) {
+            flingContainer.setVisibility(View.GONE);
+            mNoUsers.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -303,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 if (dataSnapshot.child("type").getValue() != null) {
                     if (dataSnapshot.exists() && !dataSnapshot.child("connections").child("swiped_left").hasChild(currentUid) && !dataSnapshot.child("connections").child("swiped_right").hasChild(currentUid) && dataSnapshot.child("type").getValue().toString().equals(oppositeUserType)) {
+                        flingContainer.setVisibility(View.VISIBLE);
                         String profileImageUrl = "default";
                         if (!dataSnapshot.child("profileImageUrl").getValue().equals("default")) {
                             profileImageUrl = dataSnapshot.child("profileImageUrl").getValue().toString();
@@ -310,6 +322,9 @@ public class MainActivity extends AppCompatActivity {
                         Cards item = new Cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString(), profileImageUrl);
                         rowItems.add(item);
                         arrayAdapter.notifyDataSetChanged();
+                        checkIfNoUsersLeft();
+                    } else {
+                        checkIfNoUsersLeft();
                     }
                 }
             }
